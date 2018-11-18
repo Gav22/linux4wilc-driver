@@ -1,0 +1,13 @@
+Source: wilc
+Section: kernel
+Priority: optional
+Maintainer: Michael Walton <mike@farsouthnet.com>
+Build-Depends: debhelper (>> 9), bzip2
+Standards-Version: 3.9.4
+
+Package: wilc-source
+Section: devel
+Architecture: all
+Depends: module-assistant, debhelper (>> 9), make, bzip2, build-essential
+Description: Source for AT WILC drivers
+ This package provides the source code for the WILC1000/3000 WiFi drivers
