@@ -50,7 +50,7 @@ void handle_pwrsave_for_IP(struct wilc_vif *vif, uint8_t state)
 
 		/* Start the DuringIPTimer */
 	#if KERNEL_VERSION(4, 15, 0) > LINUX_VERSION_CODE
-		vif->during_ip_timer.data = (uint32_t)vif;
+		vif->during_ip_timer.data = (uint64_t)vif;
 	#endif
 		mod_timer(&vif->during_ip_timer,
 			  (jiffies + msecs_to_jiffies(20000)));
@@ -81,7 +81,7 @@ void handle_pwrsave_for_IP(struct wilc_vif *vif, uint8_t state)
 
 		/* Start the DuringIPTimer */
 	#if KERNEL_VERSION(4, 15, 0) > LINUX_VERSION_CODE
-		vif->during_ip_timer.data = (uint32_t)vif;
+		vif->during_ip_timer.data = (uint64_t)vif;
 	#endif
 		mod_timer(&vif->during_ip_timer,
 			  (jiffies + msecs_to_jiffies(DURING_IP_TIME_OUT)));
