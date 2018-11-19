@@ -290,7 +290,7 @@ static int dev_state_ev_handler(struct notifier_block *this,
 	vif = netdev_priv(dev);
 	if (memcmp(dev_iface->ifa_label, IFC_0, 5) &&
 	    memcmp(dev_iface->ifa_label, IFC_1, 4)) {
-		PRINT_INFO(vif->ndev, GENERIC_DBG,
+		PRINT_INFO(dev, GENERIC_DBG,
 			   "Interface is neither WLAN0 nor P2P0\n");
 		return NOTIFY_DONE;
 	}
@@ -307,16 +307,16 @@ static int dev_state_ev_handler(struct notifier_block *this,
 	}
 	hif_drv = (struct host_if_drv *)priv->hif_drv;
 	if (!vif || !hif_drv) {
-		PRINT_WRN(vif->ndev, GENERIC_DBG, "No Wireless Priv\n");
+		PRINT_WRN(dev, GENERIC_DBG, "No Wireless Priv\n");
 		return NOTIFY_DONE;
 	}
-	PRINT_INFO(vif->ndev, GENERIC_DBG, "dev_state_ev_handler +++\n");
+	PRINT_INFO(dev, GENERIC_DBG, "dev_state_ev_handler +++\n");
 
 	switch (event) {
 	case NETDEV_UP:
-		PRINT_INFO(vif->ndev, GENERIC_DBG,
+		PRINT_INFO(dev, GENERIC_DBG,
 			   "dev_state_ev_handler event=NETDEV_UP %p\n",dev);
-		PRINT_D(vif->ndev, GENERIC_DBG,
+		PRINT_D(dev, GENERIC_DBG,
 			"\n =========== IP Address Obtained ============\n\n");
 		if (vif->iftype == STATION_MODE || vif->iftype == CLIENT_MODE) {
 			hif_drv->IFC_UP = 1;
@@ -324,19 +324,19 @@ static int dev_state_ev_handler(struct notifier_block *this,
 			handle_pwrsave_during_obtainingIP(vif,
 							  IP_STATE_OBTAINED);
 		}
-		PRINT_INFO(vif->ndev, GENERIC_DBG, "[%s] Up IP\n", dev_iface->ifa_label);
+		PRINT_INFO(dev, GENERIC_DBG, "[%s] Up IP\n", dev_iface->ifa_label);
 
 		ip_addr_buf = (char *)&dev_iface->ifa_address;
-		PRINT_INFO(vif->ndev, GENERIC_DBG, "IP add=%d:%d:%d:%d\n",
+		PRINT_INFO(dev, GENERIC_DBG, "IP add=%d:%d:%d:%d\n",
 			   ip_addr_buf[0], ip_addr_buf[1],
 			   ip_addr_buf[2], ip_addr_buf[3]);
 
 		break;
 
 	case NETDEV_DOWN:
-		PRINT_INFO(vif->ndev, GENERIC_DBG,
+		PRINT_INFO(dev, GENERIC_DBG,
 			   "dev_state_ev_handler event=NETDEV_DOWN %p\n",dev);
-		PRINT_D(vif->ndev, GENERIC_DBG,
+		PRINT_D(dev, GENERIC_DBG,
 			"\n =========== IP Address Released ============\n\n");
 		if (vif->iftype == STATION_MODE || vif->iftype == CLIENT_MODE) {
 			hif_drv->IFC_UP = 0;
@@ -346,16 +346,16 @@ static int dev_state_ev_handler(struct notifier_block *this,
 
 		wilc_resolve_disconnect_aberration(vif);
 
-		PRINT_INFO(vif->ndev, GENERIC_DBG, "[%s] Down IP\n", dev_iface->ifa_label);
+		PRINT_INFO(dev, GENERIC_DBG, "[%s] Down IP\n", dev_iface->ifa_label);
 
 		ip_addr_buf = null_ip;
-		PRINT_INFO(vif->ndev, GENERIC_DBG, "IP add=%d:%d:%d:%d\n",
+		PRINT_INFO(dev, GENERIC_DBG, "IP add=%d:%d:%d:%d\n",
 			   ip_addr_buf[0], ip_addr_buf[1],
 			   ip_addr_buf[2], ip_addr_buf[3]);
 		break;
 
 	default:
-		PRINT_INFO(vif->ndev, GENERIC_DBG,
+		PRINT_INFO(dev, GENERIC_DBG,
 			   "dev_state_ev_handler [%s] unknown dev event %lu\n",
 			   dev_iface->ifa_label, event);
 		break;

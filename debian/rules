@@ -97,11 +97,11 @@ binary-modules: debug
 	dh_installdirs lib/modules/$(KVERS)/extra
 	dh_installdirs lib/firmware/mchp
 
-	# Build the module
+	# Build the modules
 	export CROSS_COMPILE
 	ARCH=$(ARCH) $(MAKE) -C $(KSRC) M=$(PWD)/wilc CONFIG_WLAN_VENDOR_MCHP=y CONFIG_WILC_SDIO=m CONFIG_WILC_HW_OOB_INTR=n
 
-	# Install the module
+	# Install the modules
 	ARCH=$(ARCH) $(MAKE) -C $(KSRC) M=$(PWD)/wilc INSTALL_MOD_PATH=$(CURDIR)/debian/$(PKGNAME) INSTALL_MOD_DIR=extra modules_install
 	 
 	dh_install firmware/wilc1000_wifi_firmware.bin lib/firmware/mchp

@@ -1,3 +1,9 @@
+wilc (0.3) xenial; urgency=medium
+
+  * Add power sequence driver
+
+ -- Michael Walton <mwalton@fsn-mike.intranet.farsouthnet.com>  Mon, 19 Nov 2018 17:35:36 +1300
+
 wilc (0.2) xenial; urgency=medium
 
   * Add firmware to source package
