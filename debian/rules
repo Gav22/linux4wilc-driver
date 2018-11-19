@@ -1,0 +1,229 @@
+#!/usr/bin/make -f
+# Sample debian/rules that uses debhelper. 
+# This file was originally written by Joey Hess and Craig Small.
+# As a special exception, when this file is copied by dh-make into a
+# dh-make output file, you may use that output file without restriction.
+# This special exception was added by Craig Small in version 0.37 of dh-make.
+#
+# This version is for a hypothetical package that can build a kernel modules
+# architecture-dependant package via make-kpkg, as well as an
+# architecture-independent module source package, and other packages
+# either dep/indep for things like common files or userspace components
+# needed for the kernel modules.
+
+# Uncomment this to turn on verbose mode. 
+#export DH_VERBOSE=1
+
+CFLAGS = -Wall -g
+
+ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
+	CFLAGS += -O0
+else
+	CFLAGS += -O2
+endif
+
+# some default definitions, important!
+# 
+# Name of the source package
+psource:=wilc-source
+
+# The short upstream name, used for the module source directory
+sname:=wilc
+
+### KERNEL SETUP
+### Setup the stuff needed for making kernel module packages
+### taken from /usr/share/kernel-package/sample.module.rules
+
+# prefix of the target package name
+PACKAGE=wilc-modules
+# modifiable for experiments or debugging m-a
+MA_DIR ?= /usr/share/modass
+# load generic variable handling
+-include $(MA_DIR)/include/generic.make
+# load default rules, including kdist, kdist_image, ...
+-include $(MA_DIR)/include/common-rules.make
+  
+# module assistant calculates all needed things for us and sets
+# following variables:
+# KSRC (kernel source directory), KVERS (kernel version string), KDREV
+# (revision of the Debian kernel-image package), CC (the correct
+# compiler), VERSION (the final package version string), PKGNAME (full
+# package name with KVERS included), DEB_DESTDIR (path to store DEBs)
+  
+# The kdist_config target is called by make-kpkg modules_config and
+# by kdist* rules by dependency. It should configure the module so it is
+# ready for compilation (mostly useful for calling configure).
+# prep-deb-files from module-assistant creates the neccessary debian/ files 
+kdist_config: prep-deb-files
+  
+# the kdist_clean target is called by make-kpkg modules_clean and from
+# kdist* rules. It is responsible for cleaning up any changes that have
+# been made by the other kdist_commands (except for the .deb files created)
+kdist_clean: clean
+	$(MAKE) $(MFLAGS) -f debian/rules clean
+#	rm -f driver/*.o driver/*.ko
+#
+### end  KERNEL SETUP
+ifeq ($(ARCH), arm64)
+  CROSS_COMPILE=aarch64-linux-gnu-
+  cross = 1
+else
+ifeq ($(ARCH), arm)
+  CROSS_COMPILE=arm-linux-gnueabihf-
+  cross = 1
+else
+  CROSS_COMPILE=
+  cross = 0
+endif
+endif
+
+configure: configure-stamp
+configure-stamp:
+	dh_testdir
+	# Add here commands to configure the package.
+	touch configure-stamp
+
+build-arch: configure-stamp  build-arch-stamp
+build-arch-stamp:
+	dh_testdir
+	touch $@
+
+# the binary-modules rule is invoked by module-assistant while processing the
+# kdist* targets. It is called by module-assistant or make-kpkg and *not*
+# during a normal build
+binary-modules: debug
+	dh_testroot
+	dh_clean -k
+	dh_installdirs lib/modules/$(KVERS)/extra
+	dh_installdirs lib/firmware/mchp
+
+	# Build the module
+	export CROSS_COMPILE
+	ARCH=$(ARCH) $(MAKE) -C $(KSRC) M=$(PWD)/wilc CONFIG_WLAN_VENDOR_MCHP=y CONFIG_WILC_SDIO=m CONFIG_WILC_HW_OOB_INTR=y
+
+	# Install the module
+	ARCH=$(ARCH) $(MAKE) -C $(KSRC) M=$(PWD)/wilc INSTALL_MOD_PATH=$(CURDIR)/debian/$(PKGNAME) INSTALL_MOD_DIR=extra modules_install
+	 
+	dh_install firmware/wilc1000_wifi_firmware.bin lib/firmware/mchp
+	dh_installmodules
+	dh_installdebconf
+	dh_installdocs
+	dh_installchangelogs
+	dh_compress
+	dh_fixperms
+	dh_installdeb
+	dh_gencontrol -- -v$(VERSION)
+	dh_md5sums
+	dh_builddeb --destdir=$(DEB_DESTDIR)
+	dh_clean -k
+	
+debug:
+	# ------------------------- DEBUG Make Vars  ------------------------- 
+	@echo "KSRC="$(KSRC)
+	@echo "KVERS="$(KVERS)
+	@echo "MAKE="$(MAKE)
+
+build-indep:  configure-stamp build-indep-stamp
+build-indep-stamp:
+	dh_testdir
+
+	# Add here command to compile/build the arch indep package.
+	# It's ok not to do anything here, if you don't need to build
+	#  anything for this package.
+	
+    #$(MAKE)
+
+	touch $@
+
+build: build-arch build-indep
+
+clean:
+	dh_testdir
+	#dh_testroot
+	rm -f build-arch-stamp build-indep-stamp configure-stamp
+
+	# Add here commands to clean up after the build process.
+
+	dh_clean
+
+install: DH_OPTIONS=
+install: build
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+	dh_installdirs
+
+	# Create the directories to install the source into
+	dh_installdirs -p$(psource)  usr/src/modules/$(sname)/debian
+	# Copy all driver source...
+	dh_install -p$(psource) -X.svn -X.git wilc Makefile usr/src/modules/$(sname)/  
+	# Copy the needed debian/ pieces to the proper location
+	dh_install -p$(psource) -X.svn debian/*.modules.in* debian/compat debian/control debian/rules debian/changelog debian/copyright\
+		usr/src/modules/$(sname)/debian
+	#dh_install -X.svn
+	tar cjf debian/$(psource)/usr/src/$(sname).tar.bz2 \
+	  -C $(CURDIR)/debian/$(psource)/usr/src modules
+
+# Build architecture-independent files here.
+# Pass -i to all debhelper commands in this target to reduce clutter.
+binary-indep: build install
+	dh_testdir -i
+	dh_testroot -i
+	dh_installchangelogs -i
+	dh_installdocs -i
+	dh_installexamples -i
+#	dh_install -i
+#	dh_installmenu -i
+	dh_installdebconf -i
+#	dh_installlogrotate -i
+#	dh_installemacsen -i
+#	dh_installpam -i
+#	dh_installmime -i
+	dh_installinit -i
+#	dh_installcron -i
+#	dh_installinfo -i
+	dh_installman -i
+	dh_link -i
+	dh_compress -i
+	dh_fixperms -i
+	dh_installdeb -i
+#	dh_perl -i
+#	dh_python -i
+#	dh_makeshlibs -i
+	dh_installdeb -i
+	dh_shlibdeps -i
+	dh_gencontrol -i
+	dh_md5sums -i
+	dh_builddeb -i
+
+# Build architecture-dependent files here.
+binary-arch: build install
+	dh_testdir -s
+	dh_testroot -s
+#	dh_installdebconf -s
+	dh_installdocs -s
+	dh_installexamples -s
+	dh_installmenu -s
+#	dh_installlogrotate -s
+#	dh_installemacsen -s
+#	dh_installpam -s
+#	dh_installmime -s
+	dh_installinit -s
+	dh_installcron -s
+#	dh_installman -s
+	dh_installinfo -s
+	dh_installchangelogs -s
+	#dh_strip -a
+	dh_link -s
+	dh_compress -s
+	dh_fixperms -s
+#	dh_makeshlibs -s
+	dh_installdeb -s
+#	dh_perl -s
+	dh_shlibdeps -s
+	dh_gencontrol -s
+	dh_md5sums -s
+	dh_builddeb -s
+
+binary: binary-indep
+.PHONY: build clean binary-indep binary-arch binary install configure binary-modules kdist kdist_configure kdist_image kdist_clean
