@@ -156,7 +156,9 @@ install: build
 	# Create the directories to install the source into
 	dh_installdirs -p$(psource)  usr/src/modules/$(sname)/debian
 	# Copy all driver source...
-	dh_install -p$(psource) -X.svn -X.git wilc Makefile usr/src/modules/$(sname)/  
+	dh_install -p$(psource) -X.svn -X.git wilc usr/src/modules/$(sname)/
+	# And firmware  
+	dh_install -p$(psource) -X.svn -X.git firmware usr/src/modules/$(sname)/
 	# Copy the needed debian/ pieces to the proper location
 	dh_install -p$(psource) -X.svn debian/*.modules.in* debian/compat debian/control debian/rules debian/changelog debian/copyright\
 		usr/src/modules/$(sname)/debian
