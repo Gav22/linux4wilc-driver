@@ -2338,9 +2338,16 @@ static int change_virtual_intf(struct wiphy *wiphy, struct net_device *dev,
 		memset(priv->assoc_stainfo.sta_associated_bss, 0,
 		       MAX_NUM_STA * ETH_ALEN);
 
+#if 0
 		wilc_enable_ps = true;
 		wilc_set_power_mgmt(vif_1, 1, 0);
 		wilc_set_power_mgmt(vif_2, 1, 0);
+#else
+		// MW: let's leave off pwr management...
+		wilc_enable_ps = false;
+		wilc_set_power_mgmt(vif_1, 0, 0);
+		wilc_set_power_mgmt(vif_2, 0, 0);
+#endif
 		break;
 
 	case NL80211_IFTYPE_P2P_CLIENT:

@@ -130,7 +130,7 @@ static int linux_sdio_probe(struct sdio_func *func,
 {
 	struct wilc *wilc;
 	int ret, io_type;
-	static bool init_power;
+	static bool init_power = 0;
 
 	int gpio_reset = -1;
 	int gpio_chip_en = -1;
@@ -317,6 +317,8 @@ static int wilc_sdio_enable_interrupt(struct wilc *dev)
 	struct sdio_func *func = container_of(dev->dev, struct sdio_func, dev);
 	int ret = 0;
 	sdio_intr_lock  = WILC_SDIO_HOST_NO_TAKEN;
+
+	dev_info(&func->dev, "wilc_sdio_enable_interrupt\n");
 
 	sdio_claim_host(func);
 	ret = sdio_claim_irq(func, wilc_sdio_interrupt);
