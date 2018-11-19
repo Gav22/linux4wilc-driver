@@ -979,7 +979,8 @@ int wilc_wlan_handle_txq(struct net_device *dev, u32 *txq_count)
 	int ret = 0;
 	int counter;
 	int timeout;
-	u32 vmm_table[WILC_VMM_TBL_SIZE];
+	//u32 vmm_table[WILC_VMM_TBL_SIZE];
+	u32 *vmm_table;
 	u8 ac_pkt_num_to_chip[NQUEUES] = {0, 0, 0, 0};
 	struct wilc_vif *vif;
 	struct wilc *wilc;
@@ -995,6 +996,8 @@ int wilc_wlan_handle_txq(struct net_device *dev, u32 *txq_count)
 		*txq_count = 0;
 		return 0;
 	}
+
+	vmm_table = kmalloc(WILC_VMM_TBL_SIZE*sizeof(u32), GFP_KERNEL);
 
 	if (wilc->quit)
 		goto out;
@@ -1281,6 +1284,7 @@ out_release_bus:
 
 out:
 	mutex_unlock(&wilc->txq_add_to_head_cs);
+	kfree(vmm_table);
 
 	wilc->txq_exit = 1;
 	PRINT_INFO(vif->ndev, TX_DBG,"THREAD: Exiting txq\n");

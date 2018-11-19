@@ -61,7 +61,7 @@ void handle_pwrsave_during_obtainingIP(struct wilc_vif *vif, uint8_t state)
 
 		/* Start the DuringIPTimer */
 	#if LINUX_VERSION_CODE < KERNEL_VERSION(4,15,0)
-		priv->during_ip_timer.data = (uint32_t)priv;
+		priv->during_ip_timer.data = (uint64_t)priv;
 	#endif
 		mod_timer(&priv->during_ip_timer, (jiffies + msecs_to_jiffies(20000)));
 
@@ -91,7 +91,7 @@ void handle_pwrsave_during_obtainingIP(struct wilc_vif *vif, uint8_t state)
 
 		/* Start the DuringIPTimer */
 	#if LINUX_VERSION_CODE < KERNEL_VERSION(4,15,0)
-		priv->during_ip_timer.data = (uint32_t)priv;
+		priv->during_ip_timer.data = (uint64_t)priv;
 	#endif
 		mod_timer(&priv->during_ip_timer, (jiffies + msecs_to_jiffies(duringIP_TIME)));
 

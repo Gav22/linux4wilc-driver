@@ -287,6 +287,7 @@ static int wilc_sdio_resume(struct device *dev)
 
 static const struct of_device_id wilc_of_match[] = {
 	{ .compatible = "atmel,wilc_sdio", },
+	{ .compatible = "microchip,wilc1000", },
 	{}
 };
 MODULE_DEVICE_TABLE(of, wilc_of_match);
@@ -501,7 +502,9 @@ static int sdio_write_reg(struct wilc *wilc, u32 addr, u32 data)
 		cmd.block_mode = 0;
 		cmd.increment = 1;
 		cmd.count = 4;
-		cmd.buffer = (u8 *)&data;
+		//cmd.buffer = (u8 *)&data;
+		*((u32*)&wilc->tmp_buf) = data;
+		cmd.buffer = (u8 *) &wilc->tmp_buf;
 		cmd.block_size = g_sdio.block_size;
 		ret = wilc_sdio_cmd53(wilc, &cmd);
 		if (ret) {
@@ -638,8 +641,8 @@ static int sdio_read_reg(struct wilc *wilc, u32 addr, u32 *data)
 		cmd.block_mode = 0;
 		cmd.increment = 1;
 		cmd.count = 4;
-		cmd.buffer = (u8 *)data;
-
+		//cmd.buffer = (u8 *)data;
+		cmd.buffer = (u8 *) &wilc->tmp_buf;
 		cmd.block_size = g_sdio.block_size;
 		ret = wilc_sdio_cmd53(wilc, &cmd);
 		if (ret) {
@@ -647,6 +650,7 @@ static int sdio_read_reg(struct wilc *wilc, u32 addr, u32 *data)
 				"Failed cmd53, read reg (%08x)...\n", addr);
 			goto fail;
 		}
+		*data = *((u32*)&wilc->tmp_buf);
 	}
 
 	*data = cpu_to_le32(*data);
@@ -670,9 +674,9 @@ static int sdio_read(struct wilc *wilc, u32 addr, u8 *buf, u32 size)
 		/**
 		 *      has to be word aligned...
 		 **/
-		if (size & 0x3) {
-			size += 4;
-			size &= ~0x3;
+		if (size & 0x7) {
+			size += 8;
+			size &= ~0x7;
 		}
 
 		/**
@@ -684,9 +688,9 @@ static int sdio_read(struct wilc *wilc, u32 addr, u8 *buf, u32 size)
 		/**
 		 *      has to be word aligned...
 		 **/
-		if (size & 0x3) {
-			size += 4;
-			size &= ~0x3;
+		if (size & 0x7) {
+			size += 8;
+			size &= ~0x7;
 		}
 
 		/**

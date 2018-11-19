@@ -137,7 +137,7 @@
 #define LINUX_TX_SIZE	(64 * 1024)
 
 #define MODALIAS		"WILC_SPI"
-#define GPIO_NUM		0x5B
+#define GPIO_NUM		358
 #define GPIO_NUM_CHIP_EN	94
 #define GPIO_NUM_RESET		60
 
