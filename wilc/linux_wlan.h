@@ -1,48 +1,37 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Atmel WILC 802.11 b/g/n driver
- *
- * Copyright (c) 2015 Atmel Corportation
- *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
- * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * Copyright (c) 2012 - 2018 Microchip Technology Inc., and its subsidiaries.
+ * All rights reserved.
  */
 
 #ifndef WILC_LINUX_WLAN_H
 #define WILC_LINUX_WLAN_H
 #include <linux/types.h>
-#include "wilc_wfi_netdevice.h"
-#include "wilc_wlan_if.h"
 #include <linux/skbuff.h>
 #include <linux/netdevice.h>
 
-#define IP_STATE_OBTAINING						1
-#define IP_STATE_OBTAINED						2
-#define IP_STATE_GO_ASSIGNING					3
-#define IP_STATE_DEFAULT							4
+#include "wilc_wfi_netdevice.h"
+#include "wilc_wlan_if.h"
 
+#define IP_STATE_OBTAINING		1
+#define IP_STATE_OBTAINED		2
+#define IP_STATE_GO_ASSIGNING		3
+#define IP_STATE_DEFAULT		4
 
-void handle_pwrsave_during_obtainingIP(struct wilc_vif *vif, uint8_t state);
+extern int wait_for_recovery;
+
+void handle_pwrsave_for_IP(struct wilc_vif *vif, uint8_t state);
 void store_power_save_current_state(struct wilc_vif *vif, bool val);
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,15,0)
-void clear_duringIP(struct timer_list *t);
+#if KERNEL_VERSION(4, 15, 0) <= LINUX_VERSION_CODE
+void clear_during_ip(struct timer_list *t);
 #else
-void clear_duringIP(unsigned long arg);
+void clear_during_ip(unsigned long arg);
 #endif
 
-struct net_device* wilc_get_if_netdev(struct wilc *wilc, uint8_t ifc);
-struct host_if_drv * wilc_get_drv_handler_by_ifc(struct wilc *wilc, uint8_t ifc);
+struct net_device *wilc_get_if_netdev(struct wilc *wilc, uint8_t ifc);
+struct host_if_drv *get_drv_hndl_by_ifc(struct wilc *wilc, uint8_t ifc);
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3,14,0)
+#if KERNEL_VERSION(3, 14, 0) > LINUX_VERSION_CODE
 static inline void ether_addr_copy(u8 *dst, const u8 *src)
 {
 #if defined(CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS)
@@ -66,6 +55,10 @@ static inline bool ether_addr_equal_unaligned(const u8 *addr1, const u8 *addr2)
 	return memcmp(addr1, addr2, ETH_ALEN) == 0;
 #endif
 }
-#endif /* LINUX_VERSION_CODE < KERNEL_VERSION(3,14,0) */
+#endif /* LINUX_VERSION_CODE < KERNEL_VERSION(3, 14, 0) */
+
+int wilc_bt_power_up(struct wilc *wilc, int source);
+int wilc_bt_power_down(struct wilc *wilc, int source);
+void wilc_wfi_monitor_rx(struct wilc_vif *vif, u8 *buff, u32 size);
 
 #endif /* WILC_LINUX_WLAN_H */

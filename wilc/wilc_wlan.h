@@ -1,12 +1,24 @@
 /* SPDX-License-Identifier: GPL-2.0 */
+/*
+ * Copyright (c) 2012 - 2018 Microchip Technology Inc., and its subsidiaries.
+ * All rights reserved.
+ */
+
 #ifndef WILC_WLAN_H
 #define WILC_WLAN_H
 
 #include <linux/types.h>
 #include <linux/version.h>
 
-#define ISWILC1000(id)			((id & 0xfffff000) == 0x100000 ? 1 : 0)
-#define ISWILC3000(id)			((id & 0xfffff000) == 0x300000 ? 1 : 0)
+static inline bool is_wilc1000(u32 id)
+{
+	return ((id & 0xfffff000) == 0x100000 ? true : false);
+}
+
+static inline bool is_wilc3000(u32 id)
+{
+	return ((id & 0xfffff000) == 0x300000 ? true : false);
+}
 
 /********************************************
  *
@@ -97,18 +109,18 @@
 #define WILC_AHB_DATA_MEM_BASE		0x30000
 #define WILC_AHB_SHARE_MEM_BASE		0xd0000
 
-#define WILC_VMM_TBL_RX_SHADOW_BASE	WILC_AHB_SHARE_MEM_BASE
-#define WILC_VMM_TBL_RX_SHADOW_SIZE	256
+#define VMM_TBL_RX_SHADOW_BASE		WILC_AHB_SHARE_MEM_BASE
+#define VMM_TBL_RX_SHADOW_SIZE		256
 
 #define WILC_FW_HOST_COMM		0x13c0
 #define WILC_GP_REG_0			0x149c
 #define WILC_GP_REG_1			0x14a0
 
 #define WILC_COEXIST_CTL		0x161E00
-#define WILC_GLOBAL_MODE_CONTROL	0x1614
-#define WILC_PWR_SEQ_MISC_CTRL		0x3008
-#define WILC_COE_AUTO_PS_ON_NULL_PKT	0x160468
-#define WILC_COE_AUTO_PS_OFF_NULL_PKT	0x16046C
+#define GLOBAL_MODE_CONTROL		0x1614
+#define PWR_SEQ_MISC_CTRL		0x3008
+#define COE_AUTO_PS_ON_NULL_PKT		0x160468
+#define COE_AUTO_PS_OFF_NULL_PKT	0x16046C
 #define CCA_CTL_2 (0x160EF4)
 #define CCA_CTL_7 (0x160F08)
 
@@ -133,14 +145,13 @@
 #define WILC_CFG_RSP_SCAN	3
 #define ABORT_INT		BIT(31)
 
-#define LINUX_RX_SIZE	(96 * 1024)
-#define LINUX_TX_SIZE	(64 * 1024)
+#define LINUX_RX_SIZE		(96 * 1024)
+#define LINUX_TX_SIZE		(64 * 1024)
 
 #define MODALIAS		"WILC_SPI"
-#define GPIO_NUM		358
+#define GPIO_NUM			358
 #define GPIO_NUM_CHIP_EN	94
 #define GPIO_NUM_RESET		60
-
 
 #define NQUEUES			4
 #define VO_AC_COUNT_POS		25
@@ -207,29 +218,18 @@
 #define ENABLE_RX_VMM		(SEL_VMM_TBL1 | EN_VMM)
 #define ENABLE_TX_VMM		(SEL_VMM_TBL0 | EN_VMM)
 /*time for expiring the completion of cfg packets*/
-#define CFG_PKTS_TIMEOUT	2000
+#define CFG_PKTS_TIMEOUT	3000
 
 #define IS_MANAGMEMENT		0x100
 #define IS_MANAGMEMENT_CALLBACK	0x080
 #define IS_MGMT_STATUS_SUCCES	0x040
-
-/********************************************
- *
- *      Debug Type
- *
- ********************************************/
+#define IS_MON_PKT		0x020
 
 /********************************************
  *
  *      Tx/Rx Queue Structure
  *
  ********************************************/
-struct txq_handle {
-	struct txq_entry_t *txq_head;
-	struct txq_entry_t *txq_tail;
-	u16 count;
-	u8 acm;
-};
 
 enum ip_pkt_priority {
 	AC_VO_Q = 0,
@@ -239,11 +239,10 @@ enum ip_pkt_priority {
 };
 
 struct txq_entry_t {
-	struct txq_entry_t *next;
-	struct txq_entry_t *prev;
+	struct list_head list;
 	int type;
 	u8 q_num;
-	int tcp_pending_ack_idx;
+	int ack_idx;
 	u8 *buffer;
 	int buffer_size;
 	void *priv;
@@ -251,8 +250,14 @@ struct txq_entry_t {
 	void (*tx_complete_func)(void *priv, int status);
 };
 
+struct txq_handle {
+	struct txq_entry_t txq_head;
+	u16 count;
+	u8 acm;
+};
+
 struct rxq_entry_t {
-	struct rxq_entry_t *next;
+	struct list_head list;
 	u8 *buffer;
 	int buffer_size;
 };
@@ -284,21 +289,12 @@ struct wilc_hif_func {
 	int (*enable_interrupt)(struct wilc *nic);
 	void (*disable_interrupt)(struct wilc *nic);
 	int (*hif_reset)(struct wilc *wilc);
-	bool (*hif_is_init)(void);
+	bool (*hif_is_init)(struct wilc *wilc);
 };
-
-/********************************************
- *
- *      Configuration Structure
- *
- ********************************************/
 
 #define MAX_CFG_FRAME_SIZE	1468
 
 struct wilc_cfg_frame {
-	u8 ether_header[14];
-	u8 ip_header[20];
-	u8 udp_header[8];
 	u8 wid_header[8];
 	u8 frame[MAX_CFG_FRAME_SIZE];
 };
@@ -315,28 +311,26 @@ int wilc_wlan_firmware_download(struct wilc *wilc, const u8 *buffer,
 				u32 buffer_size);
 int wilc_wlan_start(struct wilc *wilc);
 int wilc_wlan_stop(struct wilc *wilc);
-int wilc_wlan_txq_add_net_pkt(struct net_device *dev, void *priv, u8 *buffer,
+int txq_add_net_pkt(struct net_device *dev, void *priv, u8 *buffer,
 			      u32 buffer_size, wilc_tx_complete_func_t func);
 int wilc_wlan_handle_txq(struct net_device *dev, u32 *txq_count);
 void wilc_handle_isr(struct wilc *wilc);
 void wilc_wlan_cleanup(struct net_device *dev);
-int wilc_wlan_cfg_set(struct wilc_vif *vif, int start, u16 wid, u8 *buffer,
+int cfg_set(struct wilc_vif *vif, int start, u16 wid, u8 *buffer,
 		      u32 buffer_size, int commit, u32 drv_handler);
-int wilc_wlan_cfg_get(struct wilc_vif *vif, int start, u16 wid, int commit,
+int cfg_get(struct wilc_vif *vif, int start, u16 wid, int commit,
 		      u32 drv_handler);
-int wilc_wlan_cfg_get_val(struct wilc_vif *vif, u16 wid, u8 *buffer,
-			  u32 buffer_size);
-int wilc_wlan_txq_add_mgmt_pkt(struct net_device *dev, void *priv, u8 *buffer,
+int cfg_get_val(struct wilc *wl, u16 wid, u8 *buffer, u32 buffer_size);
+int txq_add_mgmt_pkt(struct net_device *dev, void *priv, u8 *buffer,
 			       u32 buffer_size, wilc_tx_complete_func_t func);
 
-void wilc_enable_tcp_ack_filter(bool value);
+void wilc_enable_tcp_ack_filter(struct wilc_vif *vif, bool value);
 int wilc_wlan_get_num_conn_ifcs(struct wilc *wilc);
 netdev_tx_t wilc_mac_xmit(struct sk_buff *skb, struct net_device *dev);
 
 void wilc_wfi_p2p_rx(struct net_device *dev, u8 *buff, u32 size);
 void host_wakeup_notify(struct wilc *wilc, int source);
 void host_sleep_notify(struct wilc *wilc, int source);
-extern bool wilc_enable_ps;
 void chip_allow_sleep(struct wilc *wilc, int source);
 void chip_wakeup(struct wilc *wilc, int source);
 int wilc_send_config_pkt(struct wilc_vif *vif, u8 mode, struct wid *wids,
@@ -346,7 +340,7 @@ void wilc_wlan_power_off_sequence(struct wilc *wilc);
 
 void wilc_bt_init(struct wilc *wilc);
 void wilc_bt_deinit(void);
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,15,0)
+#if KERNEL_VERSION(4, 15, 0) <= LINUX_VERSION_CODE
 void eap_buff_timeout(struct timer_list *t);
 #else
 void eap_buff_timeout(unsigned long user);
@@ -355,4 +349,7 @@ void acquire_bus(struct wilc *wilc, enum bus_acquire acquire, int source);
 void release_bus(struct wilc *wilc, enum bus_release release, int source);
 int wilc_wlan_init(struct net_device *dev);
 u32 wilc_get_chipid(struct wilc *wilc, bool update);
+void wilc_frmw_to_linux(struct wilc_vif *vif, u8 *buff, u32 size,
+				u32 pkt_offset, u8 status);
+void wilc_wfi_handle_monitor_rx(struct wilc *wilc, u8 *buff, u32 size);
 #endif

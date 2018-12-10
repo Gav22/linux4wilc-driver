@@ -1,35 +1,20 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * NewportMedia WiFi chipset driver test tools - wilc-debug
- * Copyright (c) 2012 NewportMedia Inc.
- * Author: SSW <sswd@wilcsemic.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
+ * Copyright (c) 2012 - 2018 Microchip Technology Inc., and its subsidiaries.
+ * All rights reserved.
  */
 
 #if defined(WILC_DEBUGFS)
 #include <linux/module.h>
 #include <linux/debugfs.h>
-#include <linux/poll.h>
-#include <linux/sched.h>
 
 #include "wilc_debugfs.h"
 
 static struct dentry *wilc_dir;
 
-/*
- * ----------------------------------------------------------------------------
- */
 atomic_t WILC_DEBUG_REGION = ATOMIC_INIT(INIT_DBG | GENERIC_DBG |
-										  CFG80211_DBG | HOSTAPD_DBG |
-										  PWRDEV_DBG);
-
-/*
- * ----------------------------------------------------------------------------
- */
+					 CFG80211_DBG | HOSTAPD_DBG |
+					 PWRDEV_DBG);
 
 static ssize_t wilc_debug_region_read(struct file *file, char __user *userbuf,
 				     size_t count, loff_t *ppos)
@@ -72,10 +57,6 @@ static ssize_t wilc_debug_region_write(struct file *filp,
 	return count;
 }
 
-/*
- * ----------------------------------------------------------------------------
- */
-
 #define FOPS(_open, _read, _write, _poll) { \
 		.owner	= THIS_MODULE, \
 		.open	= (_open), \
@@ -96,7 +77,8 @@ static struct wilc_debugfs_info_t debugfs_info[] = {
 		"wilc_debug_region",
 		0666,
 		0,
-		FOPS(NULL, wilc_debug_region_read, wilc_debug_region_write, NULL),
+		FOPS(NULL, wilc_debug_region_read, wilc_debug_region_write,
+		     NULL),
 	},
 };
 
@@ -106,7 +88,7 @@ int wilc_debugfs_init(void)
 	struct wilc_debugfs_info_t *info;
 
 	wilc_dir = debugfs_create_dir("wilc", NULL);
-	if(wilc_dir == NULL) {
+	if (wilc_dir == NULL) {
 		pr_err("Error creating debugfs\n");
 		return -EFAULT;
 	}
