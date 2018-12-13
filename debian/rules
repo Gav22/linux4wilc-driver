@@ -99,7 +99,7 @@ binary-modules: debug
 
 	# Build the modules
 	export CROSS_COMPILE
-	ARCH=$(ARCH) $(MAKE) -C $(KSRC) M=$(PWD)/wilc CONFIG_WLAN_VENDOR_MCHP=y CONFIG_WILC_SDIO=m CONFIG_WILC_HW_OOB_INTR=n
+	ARCH=$(ARCH) $(MAKE) -C $(KSRC) M=$(PWD)/wilc CONFIG_WLAN_VENDOR_MCHP=y CONFIG_WILC_SDIO=m
 
 	# Install the modules
 	ARCH=$(ARCH) $(MAKE) -C $(KSRC) M=$(PWD)/wilc INSTALL_MOD_PATH=$(CURDIR)/debian/$(PKGNAME) INSTALL_MOD_DIR=extra modules_install

@@ -973,6 +973,8 @@ static void wlan_deinit_locks(struct net_device *dev)
 	mutex_destroy(&wilc->rxq_cs);
 	mutex_destroy(&wilc->txq_add_to_head_cs);
 	mutex_destroy(&wilc->cs);
+	mutex_destroy(&wilc->cfg_cs);
+	mutex_destroy(&wilc->sdio_cs);
 }
 
 static void wlan_deinitialize_threads(struct net_device *dev)
@@ -1063,6 +1065,8 @@ static void wlan_init_locks(struct net_device *dev)
 	PRINT_INFO(vif->ndev, INIT_DBG, "Initializing Locks ...\n");
 
 	mutex_init(&wl->rxq_cs);
+	mutex_init(&wl->cfg_cs);
+	mutex_init(&wl->sdio_cs);
 
 	spin_lock_init(&wl->txq_spinlock);
 	mutex_init(&wl->txq_add_to_head_cs);
@@ -1091,6 +1095,7 @@ static int wlan_initialize_threads(struct net_device *dev)
 	}
 	wait_for_completion(&wilc->txq_thread_started);
 
+#if 0
 	if (!debug_running) {
 		PRINT_INFO(vif->ndev, INIT_DBG,
 			   "Creating kthread for Debugging\n");
@@ -1105,6 +1110,7 @@ static int wlan_initialize_threads(struct net_device *dev)
 		debug_running = true;
 		wait_for_completion(&wilc->debug_thread_started);
 	}
+#endif
 
 	return 0;
 }

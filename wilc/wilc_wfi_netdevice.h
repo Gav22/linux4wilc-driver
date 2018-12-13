@@ -213,6 +213,10 @@ struct wilc {
 	struct mutex rxq_cs;
 	/* lock to protect hif access */
 	struct mutex hif_cs;
+	/* lock to protect config transaction */
+	struct mutex cfg_cs;
+	/* lock to protect sdio bus transactions */
+	struct mutex sdio_cs;
 
 	struct completion cfg_event;
 	struct completion sync_event;

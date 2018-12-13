@@ -13,3 +13,5 @@ wilc-sdio-objs += wilc_sdio.o
 obj-$(CONFIG_WILC_SPI) += wilc-spi.o
 wilc-spi-objs += $(wilc-objs)
 wilc-spi-objs += wilc_spi.o 
+obj-$(CONFIG_WILC_SDIO) += wilc-pwrseq.o
+wilc-pwrseq-objs += wilc_pwrseq.o

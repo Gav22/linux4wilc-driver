@@ -8,6 +8,8 @@
 #define TAG_PARAM_OFFSET	(MAC_HDR_LEN + TIME_STAMP_LEN + \
 				 BEACON_INTERVAL_LEN + CAP_INFO_LEN)
 
+#error Not used
+
 enum basic_frame_type {
 	FRAME_TYPE_CONTROL     = 0x04,
 	FRAME_TYPE_DATA        = 0x08,

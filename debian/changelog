@@ -1,3 +1,10 @@
+wilc (0.4) xenial; urgency=medium
+
+  * Use latest firmware (dev)
+  * Protect shared resources properly
+
+ -- Michael Walton <mwalton@fsn-mike.intranet.farsouthnet.com>  Thu, 13 Dec 2018 13:26:20 +1300
+
 wilc (0.3) xenial; urgency=medium
 
   * Add power sequence driver
