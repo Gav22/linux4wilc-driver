@@ -1,3 +1,10 @@
+wilc (0.5) xenial; urgency=medium
+
+  * Add config packets to tail, not to head of txq
+  * Use mutex_trylock in loop instead of mutex_lock for acquire_bus mutex
+
+ -- Michael Walton <mwalton@fsn-mike.intranet.farsouthnet.com>  Wed, 23 Jan 2019 14:07:26 +1300
+
 wilc (0.4) xenial; urgency=medium
 
   * Use latest firmware (dev)

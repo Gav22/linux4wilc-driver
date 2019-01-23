@@ -21,7 +21,26 @@
 
 void acquire_bus(struct wilc *wilc, enum bus_acquire acquire, int source)
 {
+	// MW: strangely, using this loop method for mutex acquisition
+	// which was introduced for debug, seems to result in the lockup
+	// not manifesting (see ticket 1888)
+	int timeout;
+	int waiter = 100;
+	if (mutex_trylock(&wilc->hif_cs)) {
+		return;
+	}
+	//PRINT_INFO(wilc->vif[0]->ndev, INIT_DBG, "mlock try...\n");
+	timeout = 20;
+	while (timeout--) {
+		if (mutex_trylock(&wilc->hif_cs)) {
+			return;
+		}
+		usleep_range(waiter,2*waiter);
+		waiter += 500;
+	}
+	PRINT_ER(wilc->vif[0]->ndev, "Expect deadlock\n");
 	mutex_lock(&wilc->hif_cs);
+	PRINT_ER(wilc->vif[0]->ndev, "Oh, OK, no deadlock\n");
 	/*if (acquire == ACQUIRE_AND_WAKEUP)
 		chip_wakeup(wilc, source);*/
 }
@@ -335,7 +354,8 @@ static int wilc_wlan_txq_add_cfg_pkt(struct wilc_vif *vif, u8 *buffer,
 		   "Adding the config packet at the Queue tail\n");
 
 	mutex_lock(&wilc->txq_add_to_head_cs);
-	wilc_wlan_txq_add_to_head(vif, AC_VO_Q, tqe);
+	//wilc_wlan_txq_add_to_head(vif, AC_VO_Q, tqe);
+	wilc_wlan_txq_add_to_tail(vif->ndev, AC_VO_Q, tqe);
 	mutex_unlock(&wilc->txq_add_to_head_cs);
 
 	return 1;
@@ -455,7 +475,7 @@ static inline int ac_balance(u8 *count, u8 *ratio)
 
 static inline void ac_pkt_count(u32 reg, u8 *pkt_count)
 {
-	pkt_count[AC_BK_Q] = (reg & 0x000000fa) >> BK_AC_COUNT_POS;
+	pkt_count[AC_BK_Q] = (reg & 0x000000fc) >> BK_AC_COUNT_POS;
 	pkt_count[AC_BE_Q] = (reg & 0x0000fe00) >> BE_AC_COUNT_POS;
 	pkt_count[AC_VI_Q] = (reg & 0x00fe0000) >> VI_AC_COUNT_POS;
 	pkt_count[AC_VO_Q] = (reg & 0xfe000000) >> VO_AC_COUNT_POS;
@@ -537,7 +557,7 @@ int txq_add_net_pkt(struct net_device *dev, void *priv, u8 *buffer,
 	    (q_num == AC_BE_Q && wilc->txq[q_num].count <= q_limit[AC_BE_Q]) ||
 	    (q_num == AC_BK_Q && wilc->txq[q_num].count <= q_limit[AC_BK_Q])) {
 		PRINT_INFO(vif->ndev, TX_DBG,
-			   "Adding mgmt packet at the Queue tail\n");
+			   "Adding net packet at the Queue tail\n");
 		tqe->ack_idx = NOT_TCP_ACK;
 		if (vif->ack_filter.enabled)
 			tcp_process(dev, tqe);
@@ -970,6 +990,7 @@ int wilc_wlan_handle_txq(struct net_device *dev, u32 *txq_count)
 	u32 *vmm_table = vif->vmm_table;
 	struct wilc *wilc = vif->wilc;
 	const struct wilc_hif_func *func;
+	struct txq_entry_t *cfgdbg = NULL;
 
 	txb = wilc->tx_buffer;
 	if (!wilc->txq_entries) {
@@ -997,6 +1018,10 @@ int wilc_wlan_handle_txq(struct net_device *dev, u32 *txq_count)
 		for (ac = 0; (ac < NQUEUES) && (!max_size_over); ac++) {
 			if (!tqe_q[ac])
 				continue;
+			if (tqe_q[ac]->type == WILC_CFG_PKT) {
+				//PRINT_ER(vif->ndev, "seen config... num_pkts_to_add[ac]=%d\n", num_pkts_to_add[ac]);
+				//cfgdbg = tqe_q[ac];
+			}
 
 			ac_exist = 1;
 			for (k = 0; (k < num_pkts_to_add[ac]) &&
@@ -1083,6 +1108,10 @@ int wilc_wlan_handle_txq(struct net_device *dev, u32 *txq_count)
 
 	if (!ret)
 		goto out_release_bus;
+
+	if (cfgdbg) {
+		PRINT_ER(vif->ndev, "cfgdbg(1)\n");
+	}
 
 	timeout = 200;
 	do {
@@ -1193,9 +1222,17 @@ int wilc_wlan_handle_txq(struct net_device *dev, u32 *txq_count)
 	if (!ret)
 		goto out_release_bus;
 
+	if (cfgdbg) {
+		PRINT_ER(vif->ndev, "cfgdbg(2)\n");
+	}
+
 	if (entries == 0) {
 		ret = WILC_TX_ERR_NO_BUF;
 		goto out_release_bus;
+	}
+
+	if (cfgdbg) {
+		PRINT_ER(vif->ndev, "cfgdbg(3)\n");
 	}
 
 	release_bus(wilc, RELEASE_ALLOW_SLEEP, DEV_WIFI);
@@ -1206,12 +1243,17 @@ int wilc_wlan_handle_txq(struct net_device *dev, u32 *txq_count)
 		struct txq_entry_t *tqe;
 		u32 header, buffer_offset;
 
-		tqe = wilc_wlan_txq_remove_from_head(dev, vmm_entries_ac[i]);
-		ac_pkt_num_to_chip[vmm_entries_ac[i]]++;
-		if (!tqe)
+		if (vmm_table[i] == 0)
 			break;
 
-		if (vmm_table[i] == 0)
+		if (cfgdbg) {
+			PRINT_ER(vif->ndev, "cfgdbg(4)\n");
+			cfgdbg = NULL;
+		}
+		tqe = wilc_wlan_txq_remove_from_head(dev, vmm_entries_ac[i]);
+		ac_pkt_num_to_chip[vmm_entries_ac[i]]++;
+
+		if (!tqe)
 			break;
 
 		le32_to_cpus(&vmm_table[i]);
@@ -1828,8 +1870,10 @@ int cfg_get(struct wilc_vif *vif, int start, u16 wid, int commit,
 	int ret_size;
 	struct wilc *wilc = vif->wilc;
 
-	if (wilc->cfg_frame_in_use)
+	if (wilc->cfg_frame_in_use) {
+		PRINT_ER(vif->ndev, "Frame in use\n");
 		return 0;
+	}
 
 	if (start)
 		wilc->cfg_frame_offset = 0;
@@ -1844,12 +1888,14 @@ int cfg_get(struct wilc_vif *vif, int start, u16 wid, int commit,
 
 	wilc->cfg_frame_in_use = 1;
 
-	if (wilc_wlan_cfg_commit(vif, WILC_CFG_QUERY, drv_handler))
+	if (wilc_wlan_cfg_commit(vif, WILC_CFG_QUERY, drv_handler)) {
+		PRINT_ER(vif->ndev, "Commit failed\n");
 		ret_size = 0;
+	}
 
 	if (!wait_for_completion_timeout(&wilc->cfg_event,
 					 msecs_to_jiffies(CFG_PKTS_TIMEOUT))) {
-		PRINT_INFO(vif->ndev, TX_DBG, "Timed Out\n");
+		PRINT_ER(vif->ndev, "Timed Out\n");
 		ret_size = 0;
 	}
 	PRINT_INFO(vif->ndev, TX_DBG, "Get Response received\n");
