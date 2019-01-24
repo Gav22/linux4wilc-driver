@@ -1,3 +1,9 @@
+wilc (0.6) xenial; urgency=medium
+
+  * Oops, use correct firmware version 15.1 (was newer dev version)
+
+ -- Michael Walton <mwalton@fsn-mike.intranet.farsouthnet.com>  Fri, 25 Jan 2019 10:33:02 +1300
+
 wilc (0.5) xenial; urgency=medium
 
   * Add config packets to tail, not to head of txq
