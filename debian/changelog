@@ -1,3 +1,9 @@
+wilc (0.7) xenial; urgency=medium
+
+  * Hopeful fix for #2001 - scheduling while atomic and crash in AP 
+
+ -- Michael Walton <mwalton@fsn-mike.intranet.farsouthnet.com>  Thu, 31 Jan 2019 14:22:47 +1300
+
 wilc (0.6) xenial; urgency=medium
 
   * Oops, use correct firmware version 15.1 (was newer dev version)

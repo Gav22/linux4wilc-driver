@@ -353,10 +353,10 @@ static int wilc_wlan_txq_add_cfg_pkt(struct wilc_vif *vif, u8 *buffer,
 	PRINT_INFO(vif->ndev, TX_DBG,
 		   "Adding the config packet at the Queue tail\n");
 
-	mutex_lock(&wilc->txq_add_to_head_cs);
+	//mutex_lock(&wilc->txq_add_to_head_cs);
 	//wilc_wlan_txq_add_to_head(vif, AC_VO_Q, tqe);
 	wilc_wlan_txq_add_to_tail(vif->ndev, AC_VO_Q, tqe);
-	mutex_unlock(&wilc->txq_add_to_head_cs);
+	//mutex_unlock(&wilc->txq_add_to_head_cs);
 
 	return 1;
 }
@@ -608,9 +608,9 @@ int txq_add_mgmt_pkt(struct net_device *dev, void *priv, u8 *buffer,
 	tqe->ack_idx = NOT_TCP_ACK;
 
 	PRINT_INFO(vif->ndev, TX_DBG, "Adding Mgmt packet to Queue tail\n");
-	mutex_lock(&wilc->txq_add_to_head_cs);
+	//mutex_lock(&wilc->txq_add_to_head_cs);
 	wilc_wlan_txq_add_to_tail(dev, AC_BE_Q, tqe);
-	mutex_unlock(&wilc->txq_add_to_head_cs);
+	//mutex_unlock(&wilc->txq_add_to_head_cs);
 	return 1;
 }
 
