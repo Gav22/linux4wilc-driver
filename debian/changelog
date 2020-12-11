@@ -1,3 +1,9 @@
+wilc (0.9) buster; urgency=medium
+
+  * Hopefully we don't have any dep errors 
+
+ -- Gavin Delcie <gavin@farsouthnet.com>  Fri, 11 Dec 2020 21:24:47 +1300
+ 
 wilc (0.8) buster; urgency=medium
 
   * Move to buster 
