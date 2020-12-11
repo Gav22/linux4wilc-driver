@@ -8,7 +8,7 @@ Standards-Version: 3.9.4
 Package: wilc-modules-_KVERS_
 Architecture: any
 Provides: wilc-modules
-Depends: linux-image-_KVERS_
+Depends:
 Description: Microchip WILC1000 modules for Linux (kernel _KVERS_)
  This package contains the set of loadable kernel modules for the
  Microchip WILC1000 WiFi adapter.

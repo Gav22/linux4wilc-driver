@@ -1,3 +1,9 @@
+wilc (0.8) buster; urgency=medium
+
+  * Move to buster 
+
+ -- Gavin Delcie <gavin@farsouthnet.com>  Fri, 11 Dec 2020 20:55:47 +1300
+ 
 wilc (0.7) xenial; urgency=medium
 
   * Hopeful fix for #2001 - scheduling while atomic and crash in AP 
